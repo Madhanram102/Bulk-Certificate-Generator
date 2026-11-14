@@ -1,0 +1,12 @@
+# Compiled classes
+out/
+*.class
+
+# Generated certificates
+output/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+.DS_Store
