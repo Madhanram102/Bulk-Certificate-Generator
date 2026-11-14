@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bulk Certificate Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--bg:#0d1829;--panel:#14243b;--edge:#25395a;--text:#e9edf6;--mute:#93a3c0;--gold:#d8b25f;--gold-d:#b8943e}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 "DM Sans",system-ui,sans-serif}
+.wrap{max-width:1360px;margin:auto;padding:0 28px}
+nav{display:flex;align-items:center;gap:12px;padding:20px 0}
+.logo{width:34px;height:34px;border-radius:50%;background:var(--gold);display:grid;place-items:center}
+.logo svg{width:18px;height:18px;fill:var(--bg)}
+nav b{font:700 20px "Playfair Display",Georgia,serif;letter-spacing:.03em}
+nav a{margin-left:auto;color:var(--mute);text-decoration:none;font-size:14px}
+nav a:hover{color:var(--gold)}
+.hero{padding:34px 0 30px;max-width:760px}
+.hero h1{margin:0 0 12px;font:700 clamp(34px,4.8vw,58px)/1.1 "Playfair Display",Georgia,serif}
+.hero p{margin:0;color:var(--mute);font-size:18px;max-width:560px}
+main{display:grid;grid-template-columns:minmax(320px,410px) 1fr;gap:28px;align-items:start;padding-bottom:50px}
+@media(max-width:900px){main{grid-template-columns:1fr}.wrap{padding:0 16px}}
+.card{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:20px;margin-bottom:16px}
+.card h2{margin:0 0 14px;font:700 17px "DM Sans",sans-serif;display:flex;align-items:center;gap:10px}
+.n{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--bg);display:grid;place-items:center;font-size:13px;font-weight:700}
+label{display:block;font-size:13px;color:var(--mute);margin:12px 0 5px}
+input[type=text],select,textarea{width:100%;font:inherit;font-size:15px;color:var(--text);background:#0e1b30;border:1px solid var(--edge);border-radius:8px;padding:10px 12px}
+textarea.sm{height:68px;font:14px/1.5 "DM Sans",sans-serif}
+textarea{height:170px;resize:vertical;font:13px/1.6 Consolas,monospace}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.drop.over textarea{border-color:var(--gold);background:#16294a}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.btn{font:700 14px "DM Sans",sans-serif;padding:10px 16px;border-radius:8px;border:1px solid var(--edge);background:transparent;color:var(--text);cursor:pointer;transition:background .15s,border-color .15s}
+.btn:hover{border-color:var(--gold)}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#0d1829}
+.btn.gold:hover{background:#e6c378}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.file input{display:none}
+.themes{display:flex;gap:10px;flex-wrap:wrap}
+.sw{width:46px;height:46px;border-radius:50%;border:3px solid transparent;cursor:pointer;padding:0;position:relative}
+.sw::after{content:"";position:absolute;inset:11px;border-radius:50%;background:var(--g)}
+.sw.on{border-color:#fff}
+.tags{display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px;font-size:14px;color:var(--mute)}
+.tags b{color:var(--gold);font-size:18px}
+#list{list-style:none;margin:0;padding:0;max-height:150px;overflow:auto;display:flex;flex-wrap:wrap;gap:6px}
+#list li{padding:4px 11px;border:1px solid var(--edge);border-radius:99px;font-size:13px;cursor:pointer}
+#list li:hover{border-color:var(--gold)}
+#list li.on{background:var(--gold);border-color:var(--gold);color:#0d1829;font-weight:700}
+.empty{color:var(--mute);font-size:14px}
+.stage{position:sticky;top:16px}
+.desk{background:#09121f;border:1px solid var(--edge);border-radius:14px;padding:clamp(12px,3vw,34px)}
+#cv{width:100%;height:auto;display:block;border-radius:3px;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+.ctl{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px}
+.nav{display:flex;align-items:center;gap:12px;color:var(--mute);font-size:14px}
+.arrow{width:38px;height:38px;border-radius:50%;padding:0;font-size:18px}
+.dl{display:flex;gap:8px;flex-wrap:wrap}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--gold);color:#0d1829;font-weight:700;padding:11px 20px;border-radius:99px;opacity:0;pointer-events:none;transition:.25s;z-index:9}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+footer{border-top:1px solid var(--edge);color:var(--mute);font-size:14px;text-align:center;padding:22px 0}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <span class="logo"><svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg></span>
+    <b>CertForge</b>
+    <a href="https://github.com/Madhanram102/Bulk-Certificate-Generator" target="_blank" rel="noopener">View on GitHub</a>
+  </nav>
+
+  <header class="hero">
+    <h1>A certificate for everyone on your list.</h1>
+    <p>Paste your names, pick a style, and download hundreds of print-ready certificates in one ZIP. Nothing is uploaded; it all happens in your browser.</p>
+  </header>
+
+  <main>
+    <div>
+      <section class="card">
+        <h2><span class="n">1</span>Add participants</h2>
+        <div class="drop" id="drop">
+          <textarea id="data" spellcheck="false" placeholder="Name, Course, Date"></textarea>
+        </div>
+        <p class="empty" style="margin:8px 0 0">One person per line. Date is optional. You can also drop a CSV file here.</p>
+        <div class="row">
+          <label class="btn file" style="margin:0;color:var(--text)">Upload CSV<input type="file" id="csv" accept=".csv,text/csv"></label>
+          <button class="btn" id="sample">Load sample</button>
+          <button class="btn" id="clear">Clear</button>
+        </div>
+        <div class="tags"><span>Participants</span><b id="count">0</b></div>
+        <ul id="list"></ul>
+      </section>
+
+      <section class="card">
+        <h2><span class="n">2</span>Certificate details</h2>
+        <label for="org">College name</label>
+        <input type="text" id="org" value="VSB ENGINEERING COLLEGE">
+        <label for="appr">Approval lines (one per line)</label>
+        <textarea id="appr" class="sm">Approved by AICTE, New Delhi &amp; Affiliated to Anna University, Chennai.
+An ISO 9001:2015 Certified Institution Accredited by NAAC, NBA.</textarea>
+        <label for="kind">Certificate of</label>
+        <select id="kind"><option>Participation</option><option>Achievement</option><option>Completion</option><option>Appreciation</option><option>Excellence</option></select>
+        <label for="body">Description text (below the name)</label>
+        <textarea id="body" class="sm" style="height:130px">Participated in the Add on/Certificate courses on **“{COURSE}”** Organized by DEPARTMENT OF ELECTRONICS AND COMMUNICATION ENGINEERING, **VSB ENGINEERING COLLEGE,** Karur, From {date}</textarea>
+        <p class="empty" style="margin:6px 0 0">Edit freely. Put **text** between double stars for bold. Placeholders: {name}, {course}, {COURSE} (capitals), {date}.</p>
+        <label for="dates">Default {date} (used when a line has no date)</label>
+        <input type="text" id="dates" value="26/02/2024 - 29/02/2024">
+        <div class="two">
+          <div><label for="left">Left signature</label><input type="text" id="left" value="CO-ORDINATOR"></div>
+          <div><label for="right">Right signature</label><input type="text" id="right" value="HOD"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2><span class="n">3</span>Choose a color theme</h2>
+        <div class="themes" id="themes"></div>
+      </section>
+    </div>
+
+    <section class="stage">
+      <div class="desk"><canvas id="cv" width="1754" height="1240"></canvas></div>
+      <div class="ctl">
+        <div class="nav">
+          <button class="btn arrow" id="prev" aria-label="Previous">&#8592;</button>
+          <span id="pos">Sample preview</span>
+          <button class="btn arrow" id="next" aria-label="Next">&#8594;</button>
+        </div>
+        <div class="dl">
+          <button class="btn" id="one" disabled>Download PNG</button>
+          <button class="btn gold" id="all" disabled>Download all as ZIP</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<footer>Built with Java and JavaScript by Madhanram M</footer>
+<div id="toast" role="status"></div>
+
+<script>
+const W = 1754, H = 1240;
+const THEMES = {
+  "VSB Blue": {main:"#1c2b66", accent:"#f4b41a", title:"#c8352e"},
+  Emerald:    {main:"#0f4c3a", accent:"#c2a14a", title:"#0f4c3a"},
+  Burgundy:   {main:"#4a1a5c", accent:"#d9a62e", title:"#8c1d34"},
+  Royal:      {main:"#2d2a6e", accent:"#c9a227", title:"#2d2a6e"},
+  Slate:      {main:"#2b3440", accent:"#a9835a", title:"#2b3440"}
+};
+const SERIF = '"Playfair Display", Georgia, serif';
+const SANS = '"DM Sans", Arial, sans-serif';
+const SAMPLE = `Deepak P / IV ECE, Advanced Medical Image Processing
+Priya Sharma / IV ECE, Embedded Systems Design
+Arun Kumar / III ECE, Internet of Things
+Divya Lakshmi / III ECE, VLSI Design`;
+
+const $ = id => document.getElementById(id);
+const cv = $("cv"), data = $("data");
+let people = [], cur = 0, theme = "VSB Blue";
+
+const today = () => new Date().toLocaleDateString("en-GB", {day:"2-digit", month:"long", year:"numeric"});
+
+function splitLine(line){
+  const out = []; let s = "", q = false;
+  for (let i = 0; i < line.length; i++){
+    const c = line[i];
+    if (q){ if (c === '"'){ if (line[i+1] === '"'){ s += '"'; i++; } else q = false; } else s += c; }
+    else if (c === '"') q = true;
+    else if (c === ","){ out.push(s.trim()); s = ""; }
+    else s += c;
+  }
+  out.push(s.trim());
+  return out;
+}
+
+function parse(){
+  return data.value.split(/\r?\n/)
+    .filter(l => l.trim() && !/^\s*"?name"?\s*,/i.test(l))
+    .map(splitLine).filter(c => c[0] && c[1])
+    .map(c => ({name:c[0], course:c[1], date:c[2] || ""}));
+}
+
+function fit(ctx, text, font, start, maxW){
+  let size = start;
+  do { ctx.font = font(size); size -= 2; } while (size > 20 && ctx.measureText(text).width > maxW);
+}
+
+const poly = (ctx, color, pts) => {
+  ctx.fillStyle = color; ctx.beginPath();
+  pts.forEach(([x, y], i) => ctx[i ? "lineTo" : "moveTo"](x, y));
+  ctx.closePath(); ctx.fill();
+};
+
+// wraps mixed bold/regular words into centered lines
+function para(ctx, runs, y, maxW, lh){
+  const words = [];
+  runs.forEach(r => r.t.split(/\s+/).filter(Boolean).forEach(w => words.push({w, b:r.b})));
+  const font = b => b ? `700 33px ${SERIF}` : `400 34px ${SANS}`;
+  const wid = x => { ctx.font = font(x.b); return ctx.measureText(x.w).width; };
+  const gap = 11, lines = [[]];
+  let used = 0;
+  words.forEach(x => {
+    const w = wid(x);
+    if (used + w > maxW && lines[lines.length-1].length){ lines.push([]); used = 0; }
+    lines[lines.length-1].push({...x, width:w}); used += w + gap;
+  });
+  lines.forEach((ln, i) => {
+    let x = W/2 - (ln.reduce((a, q) => a + q.width + gap, 0) - gap) / 2;
+    ctx.textAlign = "left";
+    ln.forEach(q => { ctx.font = font(q.b); ctx.fillText(q.w, x, y + i*lh); x += q.width + gap; });
+  });
+}
+
+function draw(ctx, p, o){
+  const T = THEMES[theme];
+  const mid = (t, y, x = W/2) => { ctx.textAlign = "center"; ctx.fillText(t, x, y); };
+  ctx.letterSpacing = "0px";
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+
+  // corner shapes
+  poly(ctx, T.accent, [[0,0],[300,0],[0,230]]);
+  poly(ctx, T.main,   [[0,0],[225,0],[0,172]]);
+  poly(ctx, T.accent, [[W-380,0],[W,0],[W,300]]);
+  poly(ctx, T.main,   [[W-290,0],[W,0],[W,230]]);
+  poly(ctx, T.accent, [[0,H],[0,H-330],[380,H]]);
+  poly(ctx, T.main,   [[0,H],[0,H-250],[290,H]]);
+  poly(ctx, T.accent, [[W,H],[W,H-330],[W-380,H]]);
+  poly(ctx, T.main,   [[W,H],[W,H-250],[W-290,H]]);
+
+  // college name + approvals
+  ctx.fillStyle = T.main; ctx.letterSpacing = "3px";
+  fit(ctx, o.org.toUpperCase(), s => `700 ${s}px ${SERIF}`, 70, 1150);
+  mid(o.org.toUpperCase(), 150);
+  ctx.letterSpacing = "0px";
+  o.appr.slice(0, 3).forEach((line, i) => {
+    fit(ctx, line, s => `700 ${s}px ${SANS}`, 30, 1200);
+    mid(line, 212 + i*42);
+  });
+
+  // title
+  ctx.fillStyle = T.title;
+  fit(ctx, "Certificate of " + o.kind, s => `700 ${s}px ${SERIF}`, 100, 1250);
+  mid("Certificate of " + o.kind, 410);
+
+  ctx.fillStyle = "#333"; ctx.font = `400 36px ${SANS}`;
+  mid("This is to certify that", 490);
+
+  // participant name
+  const name = p.name.toUpperCase();
+  ctx.fillStyle = T.main; ctx.letterSpacing = "5px";
+  fit(ctx, name, s => `400 ${s}px ${SERIF}`, 80, 1150);
+  mid(name, 590);
+  const half = Math.max(420, ctx.measureText(name).width/2 + 30);
+  ctx.letterSpacing = "0px";
+  ctx.strokeStyle = "#9aa0ae"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(W/2-half, 618); ctx.lineTo(W/2+half, 618); ctx.stroke();
+
+  // description paragraph
+  const d = p.date || o.dates || today();
+  const text = o.body
+    .replace(/\{COURSE\}/g, p.course.toUpperCase()).replace(/\{course\}/g, p.course)
+    .replace(/\{NAME\}/g, p.name.toUpperCase()).replace(/\{name\}/g, p.name)
+    .replace(/\{date\}/g, d);
+  ctx.fillStyle = "#222";
+  para(ctx, text.split("**").map((t, i) => ({t, b: i % 2 === 1})), 705, 1230, 54);
+
+  // medal with ribbon
+  const cx = W/2, cy = 990, r = 66;
+  poly(ctx, T.accent, [[cx-52,cy+30],[cx-6,cy+48],[cx-30,cy+140],[cx-48,cy+112],[cx-78,cy+126]]);
+  poly(ctx, T.accent, [[cx+52,cy+30],[cx+6,cy+48],[cx+30,cy+140],[cx+48,cy+112],[cx+78,cy+126]]);
+  ctx.fillStyle = T.accent;
+  for (let i = 0; i < 24; i++){
+    const a = i * Math.PI / 12;
+    ctx.beginPath(); ctx.arc(cx + r*Math.cos(a), cy + r*Math.sin(a), 9, 0, 7); ctx.fill();
+  }
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, r-12, 0, 7); ctx.stroke();
+  ctx.fillStyle = "#fff"; ctx.beginPath();
+  for (let i = 0; i < 10; i++){
+    const rad = i % 2 ? 14 : 34, a = -Math.PI/2 + i*Math.PI/5;
+    ctx[i ? "lineTo" : "moveTo"](cx + rad*Math.cos(a), cy + rad*Math.sin(a));
+  }
+  ctx.closePath(); ctx.fill();
+
+  // signature lines
+  const ly = 1068, lx = 470, rx = W-470;
+  ctx.strokeStyle = "#333"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(lx-190, ly); ctx.lineTo(lx+190, ly); ctx.moveTo(rx-190, ly); ctx.lineTo(rx+190, ly); ctx.stroke();
+  ctx.fillStyle = "#222"; ctx.font = `500 30px ${SANS}`; ctx.letterSpacing = "1px";
+  if (o.left) mid(o.left, ly+44, lx); if (o.right) mid(o.right, ly+44, rx);
+  ctx.letterSpacing = "0px";
+}
+
+const opts = () => ({
+  org:$("org").value.trim() || "College Name", kind:$("kind").value,
+  appr:$("appr").value.split(/\r?\n/).map(l => l.trim()).filter(Boolean),
+  body:$("body").value,
+  dates:$("dates").value.trim(), left:$("left").value.trim(), right:$("right").value.trim()
+});
+
+function render(){
+  const has = people.length > 0;
+  const p = has ? people[cur] : {name:"Participant Name / Year Dept", course:"Course Title", date:""};
+  draw(cv.getContext("2d"), p, opts());
+  $("pos").textContent = has ? `${cur+1} of ${people.length}` : "Sample preview";
+  $("one").disabled = $("all").disabled = !has;
+  $("prev").disabled = $("next").disabled = people.length < 2;
+}
+
+function refresh(){
+  people = parse();
+  cur = Math.min(cur, Math.max(people.length-1, 0));
+  $("count").textContent = people.length;
+  const ul = $("list"); ul.innerHTML = "";
+  if (!people.length) ul.innerHTML = '<li class="empty" style="border:0;padding:0;cursor:default">No participants yet. Paste names above or load the sample.</li>';
+  people.forEach((p, i) => {
+    const li = document.createElement("li");
+    li.textContent = p.name; li.className = i === cur ? "on" : "";
+    li.onclick = () => { cur = i; refresh(); };
+    ul.appendChild(li);
+  });
+  render();
+}
+
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+const safe = s => s.replace(/[^A-Za-z0-9._-]+/g, "_");
+const pad = n => String(n).padStart(3, "0");
+const toBlob = c => new Promise(r => c.toBlob(r, "image/png"));
+function save(blob, name){
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+$("one").onclick = async () => { save(await toBlob(cv), `${pad(cur+1)}_${safe(people[cur].name)}.png`); toast("Certificate downloaded"); };
+
+$("all").onclick = async () => {
+  if (typeof JSZip === "undefined"){ toast("ZIP library could not load. Check your internet."); return; }
+  const btn = $("all"), zip = new JSZip(), off = document.createElement("canvas");
+  off.width = W; off.height = H; btn.disabled = true;
+  const o = opts();
+  for (let i = 0; i < people.length; i++){
+    btn.textContent = `Creating ${i+1} of ${people.length}`;
+    draw(off.getContext("2d"), people[i], o);
+    zip.file(`${pad(i+1)}_${safe(people[i].name)}.png`, await toBlob(off));
+  }
+  save(await zip.generateAsync({type:"blob"}), "certificates.zip");
+  btn.textContent = "Download all as ZIP"; btn.disabled = false;
+  toast(`${people.length} certificates saved in certificates.zip`);
+};
+
+$("prev").onclick = () => { cur = (cur - 1 + people.length) % people.length; refresh(); };
+$("next").onclick = () => { cur = (cur + 1) % people.length; refresh(); };
+$("sample").onclick = () => { data.value = SAMPLE; cur = 0; refresh(); toast("Sample loaded"); };
+$("clear").onclick = () => { data.value = ""; cur = 0; refresh(); };
+
+async function loadFile(f){
+  if (!f) return;
+  data.value = (await f.text()).replace(/^\uFEFF/, ""); cur = 0; refresh();
+  toast(`${people.length} participants loaded`);
+}
+$("csv").onchange = e => loadFile(e.target.files[0]);
+const drop = $("drop");
+["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => loadFile(e.dataTransfer.files[0]));
+
+Object.entries(THEMES).forEach(([name, t]) => {
+  const b = document.createElement("button");
+  b.className = "sw" + (name === theme ? " on" : ""); b.title = name; b.setAttribute("aria-label", name + " theme");
+  b.style.background = t.main; b.style.setProperty("--g", t.accent);
+  b.onclick = () => { theme = name; document.querySelectorAll(".sw").forEach(s => s.classList.toggle("on", s === b)); render(); };
+  $("themes").appendChild(b);
+});
+
+["data","org","appr","kind","body","dates","left","right"].forEach(id => $(id).addEventListener("input", refresh));
+
+data.value = SAMPLE;
+refresh();
+// redraw once the web fonts are ready so the certificate uses them
+Promise.all(['700 40px "Playfair Display"', '400 40px "Playfair Display"', '400 40px "DM Sans"', '700 40px "DM Sans"', '500 40px "DM Sans"'].map(f => document.fonts.load(f)))
+  .then(render).catch(() => {});
+</script>
+</body>
+</html>
